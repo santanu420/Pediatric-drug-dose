@@ -1,0 +1,217 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required, immutable)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: searches
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - searchQuery: string (required)
+    //   - drugName: string (optional)
+    //   - dosage: string (optional)
+    //   - frequency: string (optional)
+    //   - notes: string (optional)
+    //   - source: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: neonatalSearches
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - searchQuery: string (required)
+    //   - drugName: string (optional)
+    //   - dosage: string (optional)
+    //   - frequency: string (optional)
+    //   - notes: string (optional)
+    //   - source: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: renalSearches
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - searchQuery: string (required)
+    //   - drugName: string (optional)
+    //   - normalDose: string (optional)
+    //   - renalImpairment: string (optional)
+    //   - hd: string (optional)
+    //   - pd: string (optional)
+    //   - cvvh: string (optional)
+    //   - notes: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: calculations
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - drugName: string (required)
+    //   - weightKg: number (required)
+    //   - calculatedDose: string (required)
+    //   - frequency: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function userIdUnchanged() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid;
+    }
+
+    function userIdNotModified() {
+      return !('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'email', 'displayName', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.email is string && isValidEmail(data.email) && data.email.size() < 100 &&
+             isValidOptionalString('displayName', 0, 100) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidSearch(data) {
+      return hasOnlyAllowedFields(['userId', 'searchQuery', 'drugName', 'dosage', 'frequency', 'notes', 'source', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.searchQuery is string && data.searchQuery.size() > 0 && data.searchQuery.size() < 200 &&
+             isValidOptionalString('drugName', 0, 200) &&
+             isValidOptionalString('dosage', 0, 200) &&
+             isValidOptionalString('frequency', 0, 200) &&
+             isValidOptionalString('notes', 0, 2000) &&
+             isValidOptionalString('source', 0, 200) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidNeonatalSearch(data) {
+      return hasOnlyAllowedFields(['userId', 'searchQuery', 'drugName', 'dosage', 'frequency', 'notes', 'source', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.searchQuery is string && data.searchQuery.size() > 0 && data.searchQuery.size() < 200 &&
+             isValidOptionalString('drugName', 0, 200) &&
+             isValidOptionalString('dosage', 0, 200) &&
+             isValidOptionalString('frequency', 0, 200) &&
+             isValidOptionalString('notes', 0, 2000) &&
+             isValidOptionalString('source', 0, 200) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidRenalSearch(data) {
+      return hasOnlyAllowedFields(['userId', 'searchQuery', 'drugName', 'normalDose', 'renalImpairment', 'hd', 'pd', 'cvvh', 'notes', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.searchQuery is string && data.searchQuery.size() > 0 && data.searchQuery.size() < 200 &&
+             isValidOptionalString('drugName', 0, 200) &&
+             isValidOptionalString('normalDose', 0, 1000) &&
+             isValidOptionalString('renalImpairment', 0, 1000) &&
+             isValidOptionalString('hd', 0, 1000) &&
+             isValidOptionalString('pd', 0, 1000) &&
+             isValidOptionalString('cvvh', 0, 1000) &&
+             isValidOptionalString('notes', 0, 2000) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidCalculation(data) {
+      return hasOnlyAllowedFields(['userId', 'drugName', 'weightKg', 'calculatedDose', 'frequency', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.drugName is string && data.drugName.size() > 0 && data.drugName.size() < 200 &&
+             data.weightKg is number && data.weightKg > 0 && data.weightKg < 500 &&
+             data.calculatedDose is string && data.calculatedDose.size() > 0 && data.calculatedDose.size() < 200 &&
+             isValidOptionalString('frequency', 0, 200) &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && uidUnchanged();
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(userId);
+    }
+
+    match /searches/{searchId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidSearch(request.resource.data) && userIdUnchanged();
+      allow update: if isDocOwner() && isValidSearch(request.resource.data) && userIdNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+
+    match /neonatalSearches/{searchId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidNeonatalSearch(request.resource.data) && userIdUnchanged();
+      allow update: if isDocOwner() && isValidNeonatalSearch(request.resource.data) && userIdNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+
+    match /renalSearches/{searchId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidRenalSearch(request.resource.data) && userIdUnchanged();
+      allow update: if isDocOwner() && isValidRenalSearch(request.resource.data) && userIdNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+
+    match /calculations/{calculationId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidCalculation(request.resource.data) && userIdUnchanged();
+      allow update: if isDocOwner() && isValidCalculation(request.resource.data) && userIdNotModified() && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+  }
+}

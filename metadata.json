@@ -1,0 +1,5 @@
+{
+  "name": "DoseCheck AI",
+  "description": "AI-powered drug dose calculator and analyzer from PDFs and images.",
+  "requestFramePermissions": []
+}

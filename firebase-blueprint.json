@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "SearchRecord": {
+      "title": "SearchRecord",
+      "description": "Record of a drug search in a document",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "searchQuery": { "type": "string" },
+        "drugName": { "type": "string" },
+        "dosage": { "type": "string" },
+        "frequency": { "type": "string" },
+        "notes": { "type": "string" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "searchQuery", "createdAt"]
+    },
+    "NeonatalSearchRecord": {
+      "title": "NeonatalSearchRecord",
+      "description": "Record of a neonatal drug search in a document",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "searchQuery": { "type": "string" },
+        "drugName": { "type": "string" },
+        "dosage": { "type": "string" },
+        "frequency": { "type": "string" },
+        "notes": { "type": "string" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "searchQuery", "createdAt"]
+    },
+    "RenalSearchRecord": {
+      "title": "RenalSearchRecord",
+      "description": "Record of a renal drug search",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "searchQuery": { "type": "string" },
+        "drugName": { "type": "string" },
+        "normalDose": { "type": "string" },
+        "renalImpairment": { "type": "string" },
+        "hd": { "type": "string" },
+        "pd": { "type": "string" },
+        "cvvh": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "searchQuery", "createdAt"]
+    },
+    "Calculation": {
+      "title": "Calculation",
+      "description": "Record of a weight-based dose calculation",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "drugName": { "type": "string" },
+        "weightKg": { "type": "number" },
+        "calculatedDose": { "type": "string" },
+        "frequency": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "drugName", "weightKg", "calculatedDose", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/searches/{searchId}": {
+      "schema": { "$ref": "#/entities/SearchRecord" },
+      "description": "User document searches"
+    },
+    "/neonatalSearches/{searchId}": {
+      "schema": { "$ref": "#/entities/NeonatalSearchRecord" },
+      "description": "User neonatal document searches"
+    },
+    "/renalSearches/{searchId}": {
+      "schema": { "$ref": "#/entities/RenalSearchRecord" },
+      "description": "User renal document searches"
+    },
+    "/calculations/{calculationId}": {
+      "schema": { "$ref": "#/entities/Calculation" },
+      "description": "User dose calculations"
+    }
+  }
+}
